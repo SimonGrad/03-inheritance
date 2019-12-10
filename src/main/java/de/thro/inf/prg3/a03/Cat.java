@@ -1,18 +1,17 @@
 package de.thro.inf.prg3.a03;
-
+import de.thro.inf.prg3.a03.State;
+import de.thro.inf.prg3.a03.states.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import static de.thro.inf.prg3.a03.Cat.State.*;
+import static de.thro.inf.prg3.a03.Cat.*;
 
 public class Cat {
 	private static final Logger logger = LogManager.getLogger();
 
-	// valid states
-	public enum State {SLEEPING, HUNGRY, DIGESTING, PLAYFUL, DEAD}
 
 	// initially, animals are sleeping
-	private State state = State.SLEEPING;
+	private State state;
 
 	// state durations (set via constructor), ie. the number of ticks in each state
 	private final int sleep;
@@ -29,49 +28,11 @@ public class Cat {
 		this.sleep = sleep;
 		this.awake = awake;
 		this.digest = digest;
+		this.state=new SleepingState(sleep);
 	}
 
 	public void tick(){
-		logger.info("tick()");
-		time = time + 1;
-
-		switch (state) {
-			case SLEEPING:
-				if (time == sleep) {
-					logger.info("Yoan... getting hungry!");
-					state = HUNGRY;
-					time = 0;
-				}
-				break;
-			case HUNGRY:
-				if(time == awake){
-					logger.info("I've starved for a too long time...good bye...");
-					state = DEAD;
-				}
-				break;
-			case DIGESTING:
-				timeDigesting = timeDigesting + 1;
-				if (timeDigesting == digest) {
-					logger.info("Getting in a playful mood!");
-					state = PLAYFUL;
-				}
-				break;
-			case PLAYFUL:
-				if (time >= awake) {
-					logger.info("Yoan... getting tired!");
-					state = SLEEPING;
-					time = 0;
-				}
-				break;
-
-			case DEAD:
-				break;
-			default:
-				throw new IllegalStateException("Unknown cat state " + state.name());
-		}
-
-		logger.info(state.name());
-
+		this.state=state.tick(this);
 	}
 
 	/**
@@ -84,33 +45,52 @@ public class Cat {
 		logger.info("You feed the cat...");
 
 		// change state and reset the timer
-		state = State.DIGESTING;
+		this.state=((HungryState) state).feed(this);
 		timeDigesting = 0;
 	}
 
+	public int getAwake() {
+		return awake;
+	}
+
+	public int getDigest() {
+		return digest;
+	}
+
+	public int getSleep() {
+		return sleep;
+	}
+
+	public int getTime() {
+		return time;
+	}
+
+	public int getTimeDigesting() {
+		return timeDigesting;
+	}
+
 	public boolean isAsleep() {
-		return state.equals(State.SLEEPING);
+		return state.getClass().equals(SleepingState.class);
 	}
 
 	public boolean isPlayful() {
-		return state.equals(State.PLAYFUL);
+		return state.getClass().equals(PlayfulState.class);
 	}
 
 	public boolean isHungry() {
-		return state.equals(State.HUNGRY);
+		return state.getClass().equals(HungryState.class);
 	}
 
 	public boolean isDigesting() {
-		return state.equals(State.DIGESTING);
+		return state.getClass().equals(DigestingState.class);
 	}
 
 	public boolean isDead() {
-		return state == State.DEAD;
+		return state.getClass().equals(DeathState.class);
 	}
 
 	@Override
 	public String toString() {
-		return name;
+		return "Name" + name;
 	}
-
 }
